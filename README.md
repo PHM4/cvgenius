@@ -81,7 +81,8 @@ Visit `http://localhost:5173` to interact with the app.
 - The production API runs as a Firebase Cloud Function (`functions/index.js`). Set secrets once via:
 
   ```bash
-  firebase functions:config:set groq.api_key="hf_your_key" groq.model="llama-3.1-8b-instant"
+  firebase functions:secrets:set GROQ_API_KEY
+  firebase functions:config:set groq_model=llama-3.1-8b-instant
   ```
 
   You can also rely on `GROQ_API_KEY`/`GROQ_MODEL` environment variables during deployment if you prefer.
@@ -106,11 +107,15 @@ npm run lint    # ESLint
 1. Log in locally (once): `npx firebase login`.
 2. Configure the Groq secret (once per project):
    ```bash
-   firebase functions:config:set groq.api_key="hf_your_key" groq.model="llama-3.1-8b-instant"
+   firebase functions:secrets:set GROQ_API_KEY
    ```
-3. Build & deploy: `npm run deploy`.
+3. (Optional) Override the default model:
+   ```bash
+   firebase functions:config:set groq_model=llama-3.1-8b-instant
+   ```
+4. Build & deploy: `npm run deploy`.
    - The script runs `npm run build`, installs Cloud Function deps, and publishes Hosting + Functions for `cvgenius-985fd`.
-4. To generate a CI token, run `npx firebase login:ci` and add the output as the `FIREBASE_TOKEN` secret in your GitHub repository settings.
+5. To generate a CI token, run `npx firebase login:ci` and add the output as the `FIREBASE_TOKEN` secret in your GitHub repository settings.
 
 ## Continuous Deployment (GitHub Actions)
 

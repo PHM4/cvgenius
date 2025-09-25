@@ -1,12 +1,12 @@
-import express from 'express';
-import cors from 'cors';
 import { onRequest } from 'firebase-functions/v2/https';
-import { logger, config } from 'firebase-functions';
+import { logger } from 'firebase-functions';
+import { defineSecret, defineString } from 'firebase-functions/params';
 import { z } from 'zod';
 
-const app = express();
-app.use(cors({ origin: true }));
-app.use(express.json({ limit: '1mb' }));
+const groqApiKeySecret = defineSecret('GROQ_API_KEY');
+const groqModelParam = defineString('GROQ_MODEL', {
+  default: 'llama-3.1-8b-instant',
+});
 
 const rewriteRequestSchema = z.object({
   company: z.string().optional(),
@@ -19,23 +19,6 @@ const rewriteResponseSchema = z.object({
   description: z.string().min(1),
   highlights: z.array(z.string()).catch([]),
 });
-
-const getGroqApiKey = () => {
-  const fromEnv = process.env.GROQ_API_KEY;
-  if (fromEnv) {
-    return fromEnv;
-  }
-  const fromConfig = config().groq?.api_key;
-  return fromConfig;
-};
-
-const getGroqModel = () => {
-  const fromEnv = process.env.GROQ_MODEL;
-  if (fromEnv) {
-    return fromEnv;
-  }
-  return config().groq?.model ?? 'llama-3.1-8b-instant';
-};
 
 function buildPrompt({ company, position, description, highlights }) {
   const trimmedHighlights = (highlights ?? []).filter(Boolean);
@@ -98,17 +81,30 @@ async function callGroq({ prompt, apiKey, model }) {
   return rewriteResponseSchema.parse(parsed);
 }
 
-app.post('/', async (req, res) => {
-  const parsed = rewriteRequestSchema.safeParse(req.body);
+export const aiRewrite = onRequest({
+  region: 'us-central1',
+  cors: true,
+  secrets: [groqApiKeySecret],
+}, async (req, res) => {
+  if (req.method === 'OPTIONS') {
+    res.status(204).send('');
+    return;
+  }
 
+  if (req.method !== 'POST') {
+    res.status(405).json({ error: 'Method not allowed' });
+    return;
+  }
+
+  const parsed = rewriteRequestSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.flatten() });
     return;
   }
 
-  const apiKey = getGroqApiKey();
+  const apiKey = groqApiKeySecret.value() || process.env.GROQ_API_KEY;
   if (!apiKey) {
-    logger.error('Missing GROQ_API_KEY. Configure functions config or env variable.');
+    logger.error('Missing GROQ_API_KEY. Configure a secret or environment variable.');
     res.status(500).json({ error: 'AI service is not configured.' });
     return;
   }
@@ -117,7 +113,7 @@ app.post('/', async (req, res) => {
     const suggestion = await callGroq({
       prompt: buildPrompt(parsed.data),
       apiKey,
-      model: getGroqModel(),
+      model: groqModelParam.value() || process.env.GROQ_MODEL || 'llama-3.1-8b-instant',
     });
     res.json(suggestion);
   } catch (error) {
@@ -129,5 +125,3 @@ app.post('/', async (req, res) => {
     res.status(status).json({ error: message });
   }
 });
-
-export const aiRewrite = onRequest({ region: 'us-central1' }, app);
