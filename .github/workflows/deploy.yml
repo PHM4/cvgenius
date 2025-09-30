@@ -45,7 +45,11 @@ jobs:
 
       - name: Sync Groq secret to Firebase
         run: |
-          npx firebase functions:secrets:set GROQ_API_KEY --data "$GROQ_API_KEY" --project cvgenius-985fd --force
+          if [ -z "${GROQ_API_KEY}" ]; then
+            echo "GROQ_API_KEY secret is not available." >&2
+            exit 1
+          fi
+          printf '%s' "$GROQ_API_KEY" | npx firebase functions:secrets:set GROQ_API_KEY --project cvgenius-985fd --force
         env:
           FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
