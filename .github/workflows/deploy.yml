@@ -27,11 +27,28 @@ jobs:
       - name: Set Vite env vars
         run: echo "VITE_AI_API_BASE_URL=https://us-central1-cvgenius-985fd.cloudfunctions.net/aiRewrite" >> $GITHUB_ENV
 
+      - name: Verify Groq secret is configured
+        run: |
+          if [ -z "${GROQ_API_KEY}" ]; then
+            echo "GROQ_API_KEY secret is not configured in the repository settings." >&2
+            echo "Add it under Settings ▸ Secrets and variables ▸ Actions before deploying." >&2
+            exit 1
+          fi
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+
       - name: Lint
         run: npm run lint
 
       - name: Build
         run: npm run build
+
+      - name: Sync Groq secret to Firebase
+        run: |
+          npx firebase functions:secrets:set GROQ_API_KEY --data "$GROQ_API_KEY" --project cvgenius-985fd --force
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
 
       - name: Deploy to Firebase Hosting
         run: npx firebase deploy --only hosting,functions --non-interactive --project cvgenius-985fd
