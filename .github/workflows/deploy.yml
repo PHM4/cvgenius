@@ -24,6 +24,34 @@ jobs:
       - name: Install Functions dependencies
         run: npm --prefix functions ci
 
+      - name: Set Firebase env vars for Vite
+        run: |
+          required_vars=(
+            VITE_FIREBASE_API_KEY
+            VITE_FIREBASE_AUTH_DOMAIN
+            VITE_FIREBASE_PROJECT_ID
+            VITE_FIREBASE_STORAGE_BUCKET
+            VITE_FIREBASE_MESSAGING_SENDER_ID
+            VITE_FIREBASE_APP_ID
+          )
+
+          for var in "${required_vars[@]}"; do
+            value=${!var}
+            if [ -z "$value" ]; then
+              echo "Missing required secret: $var" >&2
+              echo "Add it under Settings ▸ Secrets and variables ▸ Actions." >&2
+              exit 1
+            fi
+            echo "$var=$value" >> "$GITHUB_ENV"
+          done
+        env:
+          VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY }}
+          VITE_FIREBASE_AUTH_DOMAIN: ${{ secrets.VITE_FIREBASE_AUTH_DOMAIN }}
+          VITE_FIREBASE_PROJECT_ID: ${{ secrets.VITE_FIREBASE_PROJECT_ID }}
+          VITE_FIREBASE_STORAGE_BUCKET: ${{ secrets.VITE_FIREBASE_STORAGE_BUCKET }}
+          VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.VITE_FIREBASE_MESSAGING_SENDER_ID }}
+          VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID }}
+
       - name: Set Vite env vars
         run: echo "VITE_AI_API_BASE_URL=https://us-central1-cvgenius-985fd.cloudfunctions.net/aiRewrite" >> $GITHUB_ENV
 
