@@ -1,6 +1,6 @@
 # CVGenius
 
-CVGenius is a React + TypeScript resume builder that pairs streamlined forms with a live preview and PDF export. Phase 2 introduces Google authentication and Firestore-backed cloud saves so users can sync their CVs across devices.
+CVGenius is a React + TypeScript resume builder—evolved from the original "AI feedback on uploaded CVs" idea—now focused on guided editing, live preview, PDF export, cloud saves, and Groq-powered rewrite suggestions. Try the hosted build at [cvgenius-985fd.web.app](https://cvgenius-985fd.web.app).
 
 ## Features
 
