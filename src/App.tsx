@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { CVData, type SavedCVSummary } from './types/cv.types';
 import { PersonalInfoForm } from './components/forms/PersonalInfoForm';
 import { WorkExperienceForm } from './components/forms/WorkExperienceForm';
+import { ProjectsForm } from './components/forms/ProjectsForm';
 import { EducationForm } from './components/forms/EducationForm';
 import { SkillsForm } from './components/forms/SkillsForm';
 import { CVPreview } from './components/preview/CVPreview';
@@ -23,12 +24,13 @@ const initialCVData: CVData = {
   },
   workExperience: [],
   education: [],
-  skills: []
+  skills: [],
+  projects: []
 };
 
 function App() {
   const [cvData, setCVData] = useLocalStorage<CVData>('cvgenius-data', initialCVData);
-  const [activeTab, setActiveTab] = useState<'personal' | 'experience' | 'education' | 'skills'>('personal');
+  const [activeTab, setActiveTab] = useState<'personal' | 'experience' | 'projects' | 'education' | 'skills'>('personal');
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const { user, isLoading: isAuthLoading, isFirebaseReady, signInWithGoogle, signOut: signOutUser } = useAuth();
   const [savedCVs, setSavedCVs] = useState<SavedCVSummary[]>([]);
@@ -36,6 +38,19 @@ function App() {
   const [isFetchingCVs, setIsFetchingCVs] = useState(false);
   const [isLoadingRemoteCV, setIsLoadingRemoteCV] = useState(false);
   const [isSavingToCloud, setIsSavingToCloud] = useState(false);
+
+  useEffect(() => {
+    setCVData((previous) => {
+      const hasProjects = Array.isArray((previous as { projects?: unknown }).projects);
+      if (hasProjects) {
+        return previous;
+      }
+      return {
+        ...previous,
+        projects: [],
+      };
+    });
+  }, [setCVData]);
   
   const updatePersonalInfo = useCallback((personalInfo: CVData['personalInfo']) => {
     setCVData(prev => ({ ...prev, personalInfo }));
@@ -43,6 +58,10 @@ function App() {
 
   const updateWorkExperience = useCallback((workExperience: CVData['workExperience']) => {
     setCVData(prev => ({ ...prev, workExperience }));
+  }, [setCVData]);
+
+  const updateProjects = useCallback((projects: CVData['projects']) => {
+    setCVData(prev => ({ ...prev, projects }));
   }, [setCVData]);
 
   const updateEducation = useCallback((education: CVData['education']) => {
@@ -200,7 +219,13 @@ function App() {
         return;
       }
 
-      setCVData(saved.data);
+      setCVData(() => {
+        const savedData = saved.data as CVData & { projects?: CVData['projects'] };
+        return {
+          ...savedData,
+          projects: Array.isArray(savedData.projects) ? savedData.projects : [],
+        };
+      });
       setCurrentCvId(saved.id);
     } catch (error) {
       console.error('Error loading CV:', error);
@@ -291,6 +316,19 @@ function App() {
         { id: '6', name: 'PostgreSQL', level: 'advanced' },
         { id: '7', name: 'AWS', level: 'intermediate' },
         { id: '8', name: 'Docker', level: 'intermediate' },
+      ],
+      projects: [
+        {
+          id: 'proj-1',
+          name: 'Intelligent Portfolio Builder',
+          description: 'Designed a responsive personal site with dynamic CMS content, automated Lighthouse audits, and serverless contact form tooling.',
+          link: 'https://johndoe.dev'
+        },
+        {
+          id: 'proj-2',
+          name: 'Team Retrospectives App',
+          description: 'Built a realtime retrospective tool using React, Firebase, and Tailwind to help distributed teams capture actions after each sprint.',
+        }
       ]
     };
     setCVData(sampleData);
@@ -496,6 +534,16 @@ function App() {
                     Experience
                   </button>
                   <button
+                    onClick={() => setActiveTab('projects')}
+                    className={`flex-1 py-3 px-4 text-center border-b-2 font-medium text-sm transition-colors ${
+                      activeTab === 'projects'
+                        ? 'border-blue-600 text-blue-600'
+                        : 'border-transparent text-gray-500 hover:text-gray-700'
+                    }`}
+                  >
+                    Projects
+                  </button>
+                  <button
                     onClick={() => setActiveTab('education')}
                     className={`flex-1 py-3 px-4 text-center border-b-2 font-medium text-sm transition-colors ${
                       activeTab === 'education'
@@ -529,6 +577,12 @@ function App() {
                   <WorkExperienceForm 
                     data={cvData.workExperience} 
                     onChange={updateWorkExperience} 
+                  />
+                )}
+                {activeTab === 'projects' && (
+                  <ProjectsForm 
+                    data={Array.isArray(cvData.projects) ? cvData.projects : []} 
+                    onChange={updateProjects} 
                   />
                 )}
                 {activeTab === 'education' && (

@@ -36,11 +36,19 @@ export interface Skill {
   level?: 'beginner' | 'intermediate' | 'advanced' | 'expert';
 }
 
+export interface Project {
+  id: string;
+  name: string;
+  description: string;
+  link?: string;
+}
+
 export interface CVData {
   personalInfo: PersonalInfo;
   workExperience: WorkExperience[];
   education: Education[];
   skills: Skill[];
+  projects: Project[];
   templateId?: string;
   colorScheme?: string;
   fontSize?: 'small' | 'medium' | 'large';

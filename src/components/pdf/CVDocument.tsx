@@ -6,6 +6,7 @@ import {
   View,
   StyleSheet,
   Font,
+  Link,
 } from '@react-pdf/renderer';
 import { CVData } from '../../types/cv.types';
 
@@ -28,9 +29,9 @@ const styles = StyleSheet.create({
   page: {
     fontFamily: 'Roboto',
     fontSize: 10,
-    paddingTop: 40,
-    paddingBottom: 40,
-    paddingHorizontal: 40,
+    paddingTop: 32,
+    paddingBottom: 32,
+    paddingHorizontal: 36,
     lineHeight: 1.6,
     color: '#222',
     backgroundColor: '#fff',
@@ -73,7 +74,7 @@ const styles = StyleSheet.create({
     color: '#4b5563',
   },
   section: {
-    marginBottom: 24,
+    marginBottom: 18,
   },
   sectionTitle: {
     fontSize: 16,
@@ -91,7 +92,7 @@ const styles = StyleSheet.create({
     textAlign: 'justify',
   },
   experienceItem: {
-    marginBottom: 16,
+    marginBottom: 14,
   },
   experienceHeader: {
     flexDirection: 'row',
@@ -131,7 +132,7 @@ const styles = StyleSheet.create({
   },
   bulletPoint: {
     flexDirection: 'row',
-    marginBottom: 4,
+    marginBottom: 3,
   },
   bullet: {
     width: 15,
@@ -144,8 +145,34 @@ const styles = StyleSheet.create({
     color: '#374151',
     lineHeight: 1.4,
   },
+  projectItem: {
+    marginBottom: 10,
+  },
+  projectHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  projectTitle: {
+    fontSize: 13,
+    fontWeight: 700,
+    color: '#111827',
+    marginRight: 12,
+    flex: 1,
+  },
+  projectLink: {
+    fontSize: 9,
+    color: '#2563eb',
+    textDecoration: 'none',
+  },
+  projectDescription: {
+    fontSize: 10,
+    color: '#374151',
+    marginTop: 6,
+    lineHeight: 1.5,
+  },
   educationItem: {
-    marginBottom: 14,
+    marginBottom: 12,
   },
   educationHeader: {
     flexDirection: 'row',
@@ -217,6 +244,15 @@ export function CVDocument({ data }: Props) {
       return date;
     }
   };
+
+  const ensureAbsoluteUrl = (url: string): string => {
+    if (!url) {
+      return '';
+    }
+    return /^https?:\/\//i.test(url) ? url : `https://${url}`;
+  };
+
+  const projects = Array.isArray(data.projects) ? data.projects : [];
 
   // SVG icon components for PDF
   const MailIcon = () => (
@@ -333,6 +369,33 @@ export function CVDocument({ data }: Props) {
                 )}
               </View>
             ))}
+          </View>
+        )}
+
+        {/* Projects */}
+        {projects.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Projects</Text>
+            {projects.map((project) => {
+              const linkLabel = project.link?.trim();
+              const href = linkLabel ? ensureAbsoluteUrl(linkLabel) : '';
+
+              return (
+                <View key={project.id} style={styles.projectItem}>
+                  <View style={styles.projectHeader}>
+                    <Text style={styles.projectTitle}>{project.name || 'Project'}</Text>
+                    {linkLabel && href && (
+                      <Link src={href} style={styles.projectLink}>
+                        {linkLabel}
+                      </Link>
+                    )}
+                  </View>
+                  {project.description && project.description.trim() && (
+                    <Text style={styles.projectDescription}>{project.description}</Text>
+                  )}
+                </View>
+              );
+            })}
           </View>
         )}
 

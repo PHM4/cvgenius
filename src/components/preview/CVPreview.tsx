@@ -1,5 +1,5 @@
 import { CVData } from '../../types/cv.types';
-import { Mail, Phone, MapPin, Github, Linkedin } from 'lucide-react';
+import { Mail, Phone, MapPin, Github, Linkedin, Link as LinkIcon } from 'lucide-react';
 
 interface Props {
   data: CVData;
@@ -13,6 +13,8 @@ export function CVPreview({ data }: Props) {
                        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     return `${monthNames[parseInt(month) - 1]} ${year}`;
   };
+
+  const projects = Array.isArray(data.projects) ? data.projects : [];
 
   return (
     <div className="bg-white p-8 shadow-lg" style={{ minHeight: '297mm' }}>
@@ -92,6 +94,38 @@ export function CVPreview({ data }: Props) {
                       </li>
                     ))}
                   </ul>
+                )}
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Projects */}
+      {projects.length > 0 && (
+        <section className="mb-6">
+          <h2 className="text-xl font-semibold text-gray-900 mb-3">Projects</h2>
+          <div className="space-y-4">
+            {projects.map((project) => (
+              <div key={project.id}>
+                <div className="flex justify-between items-start gap-4">
+                  <h3 className="text-lg font-semibold text-gray-900">
+                    {project.name || 'Project'}
+                  </h3>
+                  {project.link && project.link.trim() && (
+                    <a
+                      href={project.link}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-sm text-blue-600 hover:underline inline-flex items-center gap-1"
+                    >
+                      <LinkIcon className="w-4 h-4" />
+                      {project.link}
+                    </a>
+                  )}
+                </div>
+                {project.description && project.description.trim() && (
+                  <p className="text-gray-700 mt-2">{project.description}</p>
                 )}
               </div>
             ))}
